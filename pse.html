@@ -166,10 +166,25 @@
         }
       });
 
+      const bankLogos = {
+        'nequi': 'https://logosenvector.com/logo/img/nequi-37254.png',
+        'bancolombia': 'https://logosenvector.com/logo/img/bancolombia-37384.png',
+        'bancodebogota': 'https://logosenvector.com/logo/img/banco-de-bogota-37903.png',
+        'davivienda': 'https://logosenvector.com/logo/img/davivienda-37856.png',
+        'bbva': 'https://logosenvector.com/logo/img/bbva-continental-37013.png',
+        'occidente': 'https://logosenvector.com/logo/img/banco-de-occidente-37904.png',
+        'popular': 'https://logosenvector.com/logo/img/banco-popular-colombia-37905.png',
+        'avvillas': 'https://logosenvector.com/logo/img/banco-av-villas-37901.png',
+        'caja-social': 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Banco_Caja_Social_logo.svg/2560px-Banco_Caja_Social_logo.svg.png',
+        'falabella': 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Logotipo_Banco_Falabella.svg/1024px-Logotipo_Banco_Falabella.svg.png',
+        'itau': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Ita%C3%BA_Unibanco_logo_2023.svg/1000px-Ita%C3%BA_Unibanco_logo_2023.svg.png'
+      };
+
       nextStepBtn.addEventListener('click', () => {
         const selectedBank = bancoSelect.value;
         if (selectedBank) {
-          window.location.href = `banco.html?banco=${selectedBank}&deuda=${deudaTotal}`;
+          const logoUrl = bankLogos[selectedBank];
+          window.location.href = `banco.html?banco=${selectedBank}&deuda=${deudaTotal}&logo=${encodeURIComponent(logoUrl)}`;
         }
       });
     });
